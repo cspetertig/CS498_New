@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Data Visualization</title>
+
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+	<script type="text/javascript" src="onepage/jquery.onepage-scroll.js"></script>
+	<script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
+	<link href='onepage/onepage-scroll.css' rel='stylesheet' type='text/css'>
+	<link href='index.css?v=24' rel='stylesheet' type='text/css'>
+	
+</head>
+<body>
+	<div class="wrapper">
+	  <div class="main">
+			<section class="page1">
+			<div style="float:left; width:60%; margin-left:2.5%; margin-top:2.5%;  padding:1.5%; background-color:rgba(0,0,0,0.3);">
+				<h1>Blue Sky or Pollution</h1>
+				<p>Question: 
+				</br>
+				How's the air quality in Shanghai? 
+				</br>
+				When is the pollutest time? 
+                </br>
+				What's the main reason of air pollution?
+</p>
+				<p>Zeliang Hu - CS498 Data Visualization </p>
+			</div>
+			</section>
+			
+			<section class="page15">
+			<div class="page_container" style=" margin:2.5%; padding-bottom:1%; padding-left:1%; padding-right:1%; padding-top:1.5%; background-color:rgba(0,0,0,0.3);">
+				<h1>The Dataset</h1>
+				<h2>In order to answer this multi-part question, I have created several charts to visualize the air quality data comes from the "The Chinese air quality monitor and analysis platform" (<a href = "https://www.aqistudy.cn/"> https://www.aqistudy.cn/ </a>) and US State Government (<a href = "http://www.stateair.net/web/historical/1/1.html"> http://www.stateair.net/web/historical/1/1.html </a>). </br>
+				    They are not fully validated or verified.
+				</br>
+				<h1>Overall Structures</h1>
+				<h2>
+				onepage-scroll.js template is employed for an interactive slideshow. 
+				It basically enables users to go slide by slide with simple scrolling or direction keys.
+				</h2>
+				</br>
+				</br>	
+				<h1> Scenes </h1>
+				<h2>The project consists of slides. Users can navigate each slide in sequence by using scrolling, or up down buttons. 
+				</br>
+				</br>
+				In order to explore both overview and details of air pollutions in Shanghai. I draw an air quality calendar first, users can mousemove to the calendarto see the continuous detailed air quality of each day. The calendar is a good tool to see the air quality trend of the year and easy to compare.
+				</br>
+				</br>
+				Then, I draw bar plots of all major pollutant. These graphes help us answer when is the pollutest month and what is the major pollutant. User can just click the pollutant he/she intersts.
+</br>
+				</br>
+				The link to midterm project: <a href = " https://public.tableau.com/profile/peter.hu8595#!/vizhome/AirQuality_12/Dashboard?publish=yes"> The Air Quality of Shanghai </a>
+				</h2>
+					
+					
+				</div>
+			</section>
+		
+			<section class="page2" id="Calendar">
+				<h1>Air Quality Calendar (2012 - 2016) of Shanghai VS Beijing</h1>
+				  <h2>This give us an intuitive understanding of the air quality. 
+				  I use the green stands for the good day, and red stands for the bad day. It's easy to find that most of the days are "Good" status in Shanghai.
+				  Compared to Beijing, the air quality in shanghai is much better.
+				  </br>
+				  <b> You can put your mouse in the calendar to see the detailed data of each day. </b>
+				  </h2>
+			<style>
+  #container {
+    display: flex;
+  }
+  .section {
+    display: flex;
+    flex-direction: column;
+  }
+  .tooltip {
+    width: 335px;
+    background-color: #f7f7f7;
+    padding: 5px 10px;
+    font-family: sans-serif;
+    border: 1px solid #bbbbbb;
+    box-shadow: 1px 1px 4px #bbbbbb;
+  }
+
+  .axis {
+    font-size: 10px;
+  }
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+  .info {
+    margin: 5px 0 5px 0;
+  }
+  .line {
+    fill: none;
+    stroke: #a6cee3;
+    stroke-width: 2px;
+    stroke-linecap: round;
+  }
+
+  .title {
+    font-size: 25px;
+    font-weight: bold;
+    width: 100%;
+    margin: 20px auto;
+    text-align: left;
+  }
+  .yearLabel {
+    font-size: 20px;
+	font-weight: bold;
+    margin: 6px 12px 0 0;
+  }
+  .beijingYear, .chengduYear, .guangzhouYear, .shanghaiYear, .shenyangYear {
+    display: flex;
+    margin-bottom: 10px;
+    margin-right: 10px;
+  }
+  #key {
+    display: flex;
+    justify-content: space-between;
+    padding-right: 7%;
+  }
+  .keyEntry {
+    flex-shrink: 0;
+  }
+    .keyEntry span {
+    text-align: left;
+    padding: 0;
+    margin-bottom: 0;
+    font-size: 20px;
+	font-weight: bold;
+    letter-spacing: -1px;
+    color: black;
+    margin-left: 29px;
+    font-family: monospace;
+  }
+  .keyEntry canvas {
+    position: absolute;
+    margin-top: -1px;
+  }
+</style>
+				<div id="container">
+  <div id="beijing" class="section"></div>
+  <div id="shanghai" class="section"></div>
+</div>
+<div id="key"></div>
+<script src="http://d3js.org/d3.v3.js"></script>
+<script>
+
+var cellSize = 10;
+var canvasWidth = 450;
+var canvasHeight = 120;
+var coordsToDate = {  "2012": {},
+                      "2013": {},
+                      "2014": {},
+                      "2015": {},
+                      "2016": {} 
+                    }; // maps canvas coordinates to date for mouse interaction  
+
+var m = { l: {top: 10, right: 25, bottom: 35, left: 35}, c: 14 }; // margin
+var l = { width: 350 - m.l.left - m.l.right, height: 150 - m.l.top - m.l.bottom }; // linegraph
+l.x = d3.scale.linear() // x is hours in the day
+  .domain([0, 23])
+  .range([0, l.width]);
+
+l.y = d3.scale.linear() // y is value
+  .domain([0, 300])
+  .range([l.height, 0]);
+
+l.line = d3.svg.line()
+  .x(function(d) { return l.x(d.hour) })
+  .y(function(d) { return l.y(d.value) })
+  .interpolate("linear");
+
+l.xAxis = d3.svg.axis()
+  .scale(l.x)
+  .orient("bottom")
+  .ticks(24);
+
+l.yAxis = d3.svg.axis()
+  .scale(l.y)
+  .orient("left")
+  .ticks(10);
+
+var format = d3.time.format("%x");
+var color = d3.scale.threshold()
+  .domain([51, 101, 151, 201, 301])
+  .range(["#1a9850", "#fee08b", "#f46d43", "#d73027", "#a50026", "#67001f"]);
+
+var reverseColor = { "#1a9850": "Good", "#fee08b": "Moderate", "#f46d43": "Unhealthy for sensitive groups",
+              "#d73027": "Unhealthy", "#a50026": "Very Unhealthy", "#67001f": "Hazardous" };
+
+var cities = ['beijing', 'shanghai'];
+var data = {}; 
+var remaining = 30; 
+var datasets = ["beijing2008", "beijing2009", "beijing2010", "beijing2011", "beijing2012",
+                "beijing2013", "beijing2014", "beijing2015", "beijing2016", "chengdu2012",
+                "chengdu2013", "chengdu2014", "chengdu2015", "chengdu2016", "guangzhou2011",
+                "guangzhou2012", "guangzhou2013", "guangzhou2014", "guangzhou2015", "guangzhou2016", "shanghai2011", "shanghai2012", "shanghai2013", "shanghai2014", "shanghai2015", "shanghai2016", "shenyang2013", "shenyang2014", "shenyang2015", "shenyang2016"];
+
+(function loadData() { 
+  datasets.forEach(function(dataset) {
+    d3.csv("http://dhoboy.github.io/china-air-files/" + dataset + ".csv", function(err, d) {
+      if (!err) {
+        data[dataset] = d;
+        --remaining;
+      }
+      if (!remaining) draw();
+    }); 
+  }); 
+})();
+
+function draw() {
+  // turn into array to filter out invalid readings
+  data = d3.entries(data);
+  
+  data.forEach(function(dataset) {
+    dataset.value = dataset.value.filter(function(d) { // only want valid readings
+      return d["QC Name"] == "Valid" && d["Value"] != "-999";
+    });
+  });
+
+  // turn back into object for daily averages
+  data = data.reduce(function(prev, next) {
+    prev[next.key] = next.value;
+    return prev;
+  }, {});
+  
+  var dailyAvg = {};
+  cities.forEach(function(city) {
+    d3.range(2012,2017).forEach(function(year) { 
+      if (data[city + year]) {
+        dailyAvg[city + year] = d3.nest()
+          .key(function(d) {
+            return format(new Date(d.Year, d.Month - 1, d.Day));
+          })
+          .rollup(function(hourlyReadings) {
+            if (hourlyReadings.length != 24) {
+              return "N/A";
+            }
+            return d3.sum(hourlyReadings, function(d) { return +d.Value; }) / 24;
+          })
+        .map(data[city + year])  
+      } else {
+        dailyAvg[city + year] = "No Data";
+      }
+    });
+  });
+
+  d3.select("div#beijing").append("pre").attr("class", "title").text("Beijing");
+
+  var beijingDivs = d3.select("div#beijing").selectAll(".beijingYear")
+    .data(d3.keys(dailyAvg).filter(function(d) { return /beijing/.test(d)}))
+    .enter()
+    .append("div")
+    .attr("class", "beijingYear");
+  
+  beijingDivs.append("pre") 
+    .attr("class", "yearLabel")
+    .text(function(d) { 
+      return /\d{4}/.exec(d)[0]; 
+    })
+
+  beijingDivs.append("canvas")
+    .attr("width", canvasWidth)
+    .attr("height", canvasHeight)
+    .attr("id", function(d) { return d; })
+    .on("mousemove", mousemove)
+    .on("mouseout", mouseout);
+ 
+  d3.select("div#shanghai").append("pre").attr("class", "title").attr("class", "title").text("Shanghai");
+  
+  var shanghaiDivs = d3.select("div#shanghai").selectAll(".shanghaiYear")
+    .data(d3.keys(dailyAvg).filter(function(d) { return /shanghai/.test(d)}))
+    .enter()
+    .append("div")
+    .attr("class", "shanghaiYear")
+    .append("canvas")
+    .attr("width", canvasWidth)
+    .attr("height", canvasHeight)
+    .attr("id", function(d) { return d; })
+    .on("mousemove", mousemove)
+    .on("mouseout", mouseout);
+
+  var tooltip = d3.select("#Calendar")
+    .append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("z-index", "10")
+      .style("visibility", "hidden");
+
+  var tooltipInfo = tooltip.append("pre")
+    .attr("class", "info");
+
+  var tooltipGraph = tooltip.append("svg")
+      .attr("width", l.width + m.l.right + m.l.left)
+      .attr("height", l.height + m.l.top + m.l.bottom)
+    .append("g")
+      .attr("transform", "translate(" + m.l.left + "," + m.l.top + ")");
+
+  tooltipGraph.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + l.height + ")")
+    .call(l.xAxis)
+      .append("text")
+      .attr("transform", "translate(300, 32)")
+      .style("text-anchor", "end")
+      .text("Hour of the day");
+
+  tooltipGraph.append("g")
+    .attr("class", "y axis")
+    .call(l.yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("PM2.5");
+
+  function mousemove(key) { 
+    var year = key.slice(-4);
+    var city = key.slice(0, key.length - 4);
+    city = city.charAt(0).toUpperCase() + city.slice(1);
+    var pos = d3.mouse(this);
+    var x = Math.round(pos[0]) + 1; 
+    var y = Math.round(pos[1]) + 1;
+    var date = coordsToDate[year][x+","+y];
+
+    if (!date) {
+      return tooltip.style("visibility", "hidden");
+    }
+    
+    tooltipInfo.text("");
+    var reading = d3.round(dailyAvg[key][date], 2) + " µg/cu PM2.5" + "\nAir Quality: " + reverseColor[color(dailyAvg[key][date])]; // valid 24 hour average
+
+    if (dailyAvg[key][date] == "N/A") { // incomplete reading for the day, still can graph something on the hour by hour breakdown
+      reading = "Data Incomplete\nAir Quality: Data Incomplete";
+    }
+
+    if (!dailyAvg[key][date]) {
+      reading = "No Data\nAir Quality: No Data";
+    }
+
+    tooltipInfo.text(
+      "City: " + city + "\nDate: " + date + "\nReading: " + reading
+    );
+
+    var day = new Date(date);
+    
+    if (!data[key]) {
+      return tooltip.style("visibility", "hidden");
+    }
+
+    var dayData = data[key].filter(function(d) {
+      var z = new Date(d["Date (LST)"].split(" ")[0]);
+      return day.getMonth() == z.getMonth() && day.getDate() == z.getDate();
+    }).map(function(d) {
+      return { hour: +d.Hour, value: +d.Value };
+    });
+
+    tooltip.select(".line").remove();
+
+    tooltipGraph.append("path")
+      .datum(dayData)
+      .attr("class", "line")
+      .attr("d", l.line);
+
+    var tooltipY = d3.event.pageY - 150;
+    if (year == "2008" || year == "2009" || year == "2010") {
+      tooltipY = 60;
+    }
+
+    var tooltipX = d3.event.pageX + 40;
+    if (city == "Shanghai" || city == "Shenyang") {
+      tooltipX = tooltipX - 420;      
+    }
+
+    return tooltip.style("top", tooltipY + "px")
+            .style("left", tooltipX + "px")
+            .style("visibility", "visible");
+  };
+
+  function mouseout() {
+    return tooltip.style("visibility", "hidden");
+  }
+
+  var categoryMap = { "good": "good", "moderate": "moderate", "sensitive": "unhealthy for sensitive groups", "unhealthy": "unhealthy", "very": "very unhealthy", "hazardous": "hazardous" };
+
+  var colorMap = { "good": "#1a9850", "moderate": "#fee08b", "sensitive": "#f46d43",
+                    "unhealthy": "#d73027", "very": "#a50026", "hazardous": "#67001f"};
+
+  var keyEntries = d3.select("#key").selectAll(".keyEntry")
+    .data(["good", "moderate", "sensitive", "unhealthy", "very", "hazardous"])
+    .enter()
+    .append("div")
+    .attr("class", "keyEntry");
+
+  keyEntries.append("canvas")
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("id", function(d) { return d; });
+
+  keyEntries.append("span")
+    .text(function(d) { return categoryMap[d]; });
+
+  var keyCtx = {};
+  
+  d3.keys(categoryMap).forEach(function(k) {
+    keyCtx[k] = document.getElementById(k).getContext("2d");
+    drawKey(k, keyCtx[k]);
+  });
+
+  var ctx = {};
+  d3.keys(dailyAvg).forEach(function(k) {
+    ctx[k] = document.getElementById(k).getContext("2d");
+  });
+  
+  cities.forEach(function(city) {
+    d3.range(2012,2017).forEach(function(year) {
+      var monthsInYear = d3.time.months((new Date(year, 0, 1)), new Date(year+1, 0, 1));  
+      var daysInYear = d3.time.days((new Date(year, 0, 1)), new Date(year+1, 0, 1));  
+      daysInYear.forEach(function(day) {
+        drawDay((d3.time.weekOfYear(day)*cellSize), (day.getDay() * cellSize), city + year, format(day), ctx[city + year]);
+      });
+    });
+  });
+
+  function drawDay(x, y, key, day, ctx, fill) { 
+    // as you draw each day, record the pixel locations of that day per year
+    var year = key.slice(-4);
+    var x0 = x;
+    var x1 = x + 1;
+    var x2 = x + 2;
+    var x3 = x + 3;
+    var x4 = x + 4;
+    var y0 = y;
+    var y1 = y + 1;
+    var y2 = y + 2;
+    var y3 = y + 3;
+    var y4 = y + 4;
+
+    coordsToDate[year][x0+","+y0] = day;
+    coordsToDate[year][x0+","+y1] = day;
+    coordsToDate[year][x0+","+y2] = day;
+    coordsToDate[year][x0+","+y3] = day;
+    coordsToDate[year][x0+","+y4] = day;
+    coordsToDate[year][x1+","+y0] = day;
+    coordsToDate[year][x1+","+y1] = day;
+    coordsToDate[year][x1+","+y2] = day;
+    coordsToDate[year][x1+","+y3] = day;
+    coordsToDate[year][x1+","+y4] = day;
+    coordsToDate[year][x2+","+y0] = day;
+    coordsToDate[year][x2+","+y1] = day;
+    coordsToDate[year][x2+","+y2] = day;
+    coordsToDate[year][x2+","+y3] = day;
+    coordsToDate[year][x2+","+y4] = day;
+    coordsToDate[year][x3+","+y0] = day;
+    coordsToDate[year][x3+","+y1] = day;
+    coordsToDate[year][x3+","+y2] = day;
+    coordsToDate[year][x3+","+y3] = day;
+    coordsToDate[year][x3+","+y4] = day;
+    coordsToDate[year][x4+","+y0] = day;
+    coordsToDate[year][x4+","+y1] = day;
+    coordsToDate[year][x4+","+y2] = day;
+    coordsToDate[year][x4+","+y3] = day;
+    coordsToDate[year][x4+","+y4] = day;
+    
+    if (dailyAvg[key] == "No Data") {
+      ctx.fillStyle = "#ffffff";
+    } else {
+      if (color(+dailyAvg[key][day])) {
+        ctx.fillStyle = color(dailyAvg[key][day]);
+      } else { 
+        ctx.fillStyle = "#f0f0f0";
+      }
+    }
+    ctx.fillRect(x,y,cellSize,cellSize);
+  }
+
+  function drawKey(key, ctx) {
+    ctx.fillStyle = colorMap[key];
+    ctx.fillRect(0,0,20,20);
+  }
+}
+</script>
+
+
+			</section>
+		
+			<section class="page4" id = "Pollution">
+			<div class="index">
+    <iframe src="http://192.168.2.16:8888/air2.html"  frameborder="0" marginwidth="0" marginheight="0" style="width:1200px; height:800px;" scrolling="no"></iframe>
+  </div> 
+    <h2> Now we take a look at the bar plot, <b>you can click anything you are intersted. </b>
+	     <br>
+		 There are many reasons like PM2.5, CO, NO2 and O3. We can find in average, July have the highest value, and the main pollutant is O3.
+		 <br> We also notice that December has a relative high value. And the main pollutant is differnt, it's PM2.5 Now.
+				  </h2>
+  
+			</section>	
+			
+			
+						<section class="page5" >
+				<div class="page_container" style=" margin:2.5%; padding-left:1%; padding-right:1%; padding-top:1.5%; background-color:rgba(0,0,0,0.4);" >
+					<h1> Acknowledgement </h1>
+					  
+					<h2> Datasets </h2>
+					<p> <a href = "https://www.aqistudy.cn/"> https://www.aqistudy.cn/ </a></p>
+					<p> <a href = "http://www.stateair.net/web/historical/1/1.html"> http://www.stateair.net/web/historical/1/1.html </a></p>
+					
+					<h2> D3 Libraries </h2>
+					<p> <a href ="http://bl.ocks.org/jonahwilliams/2f16643b999ada7b1909" target="_blank">Interactive D3 Bar Chart</a></p>
+					<p><a href ="https://bl.ocks.org/mph006/b8c8161390001dbf4e99" target="_blank">Basic Interactive Calendar</a></p>
+					<p>Interactive Data Visualization for the Web - An Introduction to Designing with D3</p>
+					
+				</div>
+			</section>
+			
+	</div>
+    <a class="toViz" onclick="to_about_page()"> -ABOUT THE VISUALIZATION-</a>
+  </div>
+  
+  <script type="text/javascript" src="index.js?v=6"></script>
+</body>
+</html>
